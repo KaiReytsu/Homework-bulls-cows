@@ -73,7 +73,8 @@ def play(event):
 
 
 number = random_number()
-print(number)  
+ #Вывод для отладки. Для самой игры не нужно
+# print(number)                       
 
 #Создание и настройка gui
 root = tk.Tk()
