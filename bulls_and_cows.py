@@ -32,6 +32,7 @@ def game_play(computer_number):
     user_input = str(user_number)[0:4]
     user_map = map(int, user_input)
     user_list = list(user_map)
+    game_number_len = 4
     if len(computer_number) > len(user_list):
         msg2.config(text = msg2.cget('text') + 'Ввели недастаточно цифр \n')
         ent.delete(0, tk.END)
@@ -42,7 +43,7 @@ def game_play(computer_number):
         return None
     if computer_number == user_list:
         return 'win!'
-    for index in range(4):
+    for index in range(game_number_len):
         if computer_number[index] == user_list[index]:
             bulls += 1
         elif user_list[index] in computer_number:
