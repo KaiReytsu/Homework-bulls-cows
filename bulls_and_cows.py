@@ -66,14 +66,15 @@ def play(event):
             exit()
         else:
             number = random_number()
-            print(number)
+            #Вывод для отладки. Для самой игры не нужно
+            # print(number)
             msg2.config(text='')
             ent.delete(0, tk.END) 
             
 
 
 number = random_number()
- #Вывод для отладки. Для самой игры не нужно
+
 # print(number)                       
 
 #Создание и настройка gui
