@@ -8,103 +8,144 @@
 # В программе необходимо использовать рекурсию.
 import tkinter as tk
 import tkinter.dialog as dg
-from random import randint
+from random import sample
 
-def random_number():
-    '''Функция возвращающая случайное число из 4 цифр'''
-    list_num = []
-    step = 0
-    list_len = 4
-    while step < list_len:
-        list_num.append(randint(0, 9))
-        step += 1
-    if len(set(list_num)) == len(list_num):
-        return list_num 
-    else:
-        return random_number()
+class CBGame(tk.Tk):
+    def __init__(self, width, heigth, title, bgcolor, ruletext, lang):
+        super().__init__()
+        self.random_number()
+        self.ruletext = ruletext[lang]
+        instrule = self.ruletext['instruction']
+        self.notifrule = self.ruletext['result']
+        self.geometry(str(width) + 'x' + str(heigth))
+        self.title(title)
+        self.configure(bg=bgcolor)
+        msg = tk.Message(width=instrule['wd'], padx=instrule['px'], pady=instrule['py'],
+              text=instrule['text'])
+        msg.pack(padx=10, pady=5)                      
+        msg.config(bg=bgcolor, fg=instrule['textcolor'],
+                    font=instrule['font'])
+        #Поле ввода чисел пользователем
+        self.ent = tk.Entry(width=8)
+        self.ent.pack()
+        self.ent.focus()
+        self.ent.bind( '<Return>', self.play)  
+
+        #Вывод результатов сравнения вводимых пользователем чисел
+        self.msg2 = tk.Message(width=self.notifrule['wd'], padx=self.notifrule['px'], pady=self.notifrule['py'], 
+                                text=self.notifrule['starttext'])
+        self.msg2.pack(padx=10, pady=5)                     
+        self.msg2.config(bg=bgcolor,
+                font=self.notifrule['font'])
 
 
-def game_play(computer_number):
-    '''Функция обработки вводимых пользователем чисел'''
-    bulls = 0
-    cows = 0
-    user_number = ent.get() 
-    user_input = str(user_number)[0:4]
-    user_map = map(int, user_input)
-    user_list = list(user_map)
-    game_number_len = 4
-    if len(computer_number) > len(user_list):
-        msg2.config(text = msg2.cget('text') + 'Ввели недастаточно цифр \n')
-        ent.delete(0, tk.END)
-        return None
-    if len(set(user_list)) != len(user_list):
-        msg2.config(text = msg2.cget('text') + 'Ввели одинаковые цифры \n')
-        ent.delete(0, tk.END)
-        return None
-    if computer_number == user_list:
-        return 'win!'
-    for index in range(game_number_len):
-        if computer_number[index] == user_list[index]:
-            bulls += 1
-        elif user_list[index] in computer_number:
-            cows += 1
-    msg2.config(text = msg2.cget('text') + 'Ваше число: ' + user_input + ' содержит ' + str(
-                                bulls) + ' быка и ' + str(
-                                    cows) + ' коровы\n')
-    ent.delete(0, tk.END)
+    def random_number(self):
+        '''Метод возвращающий случайное число из 4 цифр'''
+        self.number = sample(range(0, 10), 4)
+        print(self.number)
 
-def play(event):
-    '''Функция запуска обработки вводимых чисел'''
-    global number
-    gameplay = game_play(number)
-    if gameplay == 'win!':
-        gameOwer = dg.Dialog(title = 'Вы победили!',
-               text = '     Сыграем ещё?           ',
-               bitmap = 'questhead',
-               default = 0,
-               strings = ('Да', 'Нет'))
+    def game_play(self):
+        '''Метод основной логики игры'''
+        bulls = 0
+        cows = 0
+        user_number = self.ent.get() 
+        user_input = str(user_number)[0:4]
+        user_map = map(int, user_input)
+        user_list = list(user_map)
+        if len(self.number) > len(user_list):
+            self.msg2.config(text = self.msg2.cget('text') + self.notifrule['eoff'])
+            self.ent.delete(0, tk.END)
+            return None
+        if len(set(user_list)) != len(user_list):
+            self.msg2.config(text = self.msg2.cget('text') + self.notifrule['douberror'])
+            self.ent.delete(0, tk.END)
+            return None
+        if self.number == user_list:
+            return True
+        for index in range(len(self.number)):
+            if self.number[index] == user_list[index]:
+                bulls += 1
+            elif user_list[index] in self.number:
+                cows += 1
+        self.msg2.config(text = self.msg2.cget('text') + self.notifrule['notify'].format(user_input = user_input, bulls = bulls, cows = cows))
+        self.ent.delete(0, tk.END)
+
+    def play(self, event):
+        '''Метод запуска обработки вводимых чисел'''
+        if self.game_play():
+            if not self.continue_game():
+                exit()
+            self.random_number()
+            self.msg2.config(text=self.notifrule['starttext'])
+            self.ent.delete(0, tk.END)
+
+    def continue_game(self):
+        '''Метод вывода диалогового окна для продолжения игры'''
+        cont_dg = self.ruletext['continue']
+        gameOwer = dg.Dialog(title = cont_dg['title'],
+            text = cont_dg['text'],
+            bitmap = cont_dg['bitmap'],
+            default = 0,
+            strings = cont_dg['strings'])
         if gameOwer.num == 1: 
-            exit()
-        else:
-            number = random_number()
-            #Вывод для отладки. Для самой игры не нужно
-            # print(number)
-            msg2.config(text='')
-            ent.delete(0, tk.END) 
-            
+            return False
+        return True
 
+#Локализация игры
+text = {'rus': {
+        'continue': {'bitmap': 'questhead',
+                      'strings': ('Да', 'Нет'),
+                      'text': '     Сыграем ещё?           ',
+                      'title': 'Вы победили!'},
+        'instruction': {'font': ('Arial', 12, 'bold', 'italic'),
+                         'px': 10,
+                         'py': 5,
+                         'text': 'Введите число из 4 цифр. Цифры не должны '
+                                 'повторяться. \n'
+                                 'Быки - угаданные цифры, находящиеся на '
+                                 'нужном месте. \n'
+                                 'Коровы - угаданные цифры, находящиеся не на '
+                                 'нужном месте',
+                         'textcolor': '#3d1515',
+                         'wd': 400},
+        'result': {'douberror': 'Ввели одинаковые цифры \n',
+                    'eoff': 'Ввели недастаточно цифр \n',
+                    'font': ('times', 12, 'normal'),
+                    'notify': 'Ваше число: {user_input} содержит {bulls} быка '
+                              'и {cows} коровы\n',
+                    'px': 10,
+                    'py': 5,
+                    'starttext': '',
+                    'textcolor': '#000',
+                    'wd': 400}},
+        'eng': {
+        'continue': {'bitmap': 'questhead',
+                      'strings': ('Yes', 'No'),
+                      'text': '  Shall we play again?    ',
+                      'title': 'You win!'},
+        'instruction': {'font': ('Arial', 12, 'bold', 'italic'),
+                         'px': 10,
+                         'py': 5,
+                         'text': 'Enter a 4-digit number. Numbers must not be '
+                                 'repeated. \n'
+                                 'Bulls - guessed numbers, in the right place\n'
+                                 'Cows - guessed numbers, that are not in the '
+                                 'right place',
+                         'textcolor': '#3d1515',
+                         'wd': 400},
+        'result': {'douberror': 'Entered the same numbers \n',
+                    'eoff': 'Not enough numbers were entered \n',
+                    'font': ('times', 12, 'normal'),
+                    'notify': 'Your number: {user_input} Includes {bulls} bulls '
+                              'and {cows} cows\n',
+                    'px': 10,
+                    'py': 5,
+                    'starttext': '',
+                    'textcolor': '#000',
+                    'wd': 400}}
+        }
 
-number = random_number()
-
-# print(number)                       
-
-#Создание и настройка gui
-root = tk.Tk()
-root.geometry('500x700')
-root.title('Быки и Коровы')
-root.configure(bg='#5097ab')
-
-#Текст с правилами игры
-msg = tk.Message(width=400, padx=10, pady=5,
-              text='Введите число из 4 цифр.'
-              'Цифры не должны повторяться. \n'
-              'Быки - угаданные цифры, находящиеся на нужном месте. \n'
-              'Коровы - угаданные цифры, находящиеся не на нужном месте')
-msg.pack(padx=10, pady=5)                      
-msg.config(bg='#5097ab', fg='#3d1515',
-           font=('Arial', 12, 'bold', 'italic'))
-
-#Поле ввода чисел пользователем
-ent = tk.Entry(width=8)
-ent.pack()
-ent.focus()
-ent.bind( '<Return>', play)  
-
-#Вывод результатов сравнения вводимых пользователем чисел
-msg2 = tk.Message(width=400, padx=10, pady=5, text='')
-msg2.pack(padx=10, pady=5)                     
-msg2.config(bg='#5097ab',
-        font=('times', 12, 'normal'))  
-
-#Запуск gui
-root.mainloop()
+#Создание объекта
+cows_and_bulls = CBGame(500, 700, 'Быки и Коровы', '#5097ab', text, 'eng')
+#Запуск игры
+cows_and_bulls.mainloop()
